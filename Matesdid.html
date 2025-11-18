@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>Calculadora Matemática Pro - DID</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+
+<style>
+body{
+  background:#0d0d0d;
+  color:#e6e6e6;
+  font-family:Verdana,sans-serif;
+  margin:0;padding:0;
+}
+.container{
+  width:90%;
+  margin:20px auto;
+}
+.card{
+  background:#1a1a1a;
+  border-radius:15px;
+  padding:20px;
+  margin-bottom:25px;
+  box-shadow:0 0 10px #000;
+}
+input{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  margin-bottom:12px;
+  font-size:18px;
+  background:#262626;
+  color:white;
+}
+button{
+  width:100%;
+  background:#0078ff;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+  margin-top:10px;
+  cursor:pointer;
+}
+.result{
+  margin-top:10px;
+  font-size:18px;
+  color:#00ffaa;
+  white-space:pre-line;
+}
+h2{
+  margin-bottom:10px;
+  color:#ffcc00;
+}
+footer{
+  text-align:center;
+  margin-top:35px;
+  opacity:.7;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- 🧮 Calculadora Básica -->
+<div class="card">
+<h2>Calculadora Básica</h2>
+<input id="basic" placeholder="Ej: (5 + 2) / 3">
+<button onclick="calcBasica()">Resolver</button>
+<div class="result" id="resBasic"></div>
+</div>
+
+<!-- 📈 Derivadas / Límites -->
+<div class="card">
+<h2>Derivadas / Límites</h2>
+<input id="dif" placeholder="Ej: derivada de (2x²+1)/(x²-4)">
+<button onclick="resolverDif()">Resolver</button>
+<div class="result" id="resDif"></div>
+<div class="result" id="resExp"></div>
+</div>
+
+<!-- 🌡️ Conversiones -->
+<div class="card">
+<h2>Conversión de Medidas</h2>
+<input id="conv" placeholder="Ej: 25 °C a °F / 5 km a cm / 300 K a °C">
+<button onclick="convertir()">Convertir</button>
+<div class="result" id="resConv"></div>
+</div>
+
+<!-- 📊 Porcentajes -->
+<div class="card">
+<h2>Calculadora de Porcentajes</h2>
+<input id="por" placeholder="Ej: 25% de 800">
+<button onclick="porcentaje()">Calcular</button>
+<div class="result" id="resPor"></div>
+</div>
+
+<!-- 📘 Manual -->
+<div class="card">
+<h2>📌 Cómo usar</h2>
+❖ **Calculadora básica**  
+↳ Escribe: `5+5`, `5/2`, `(4.2*5)/3`  
+
+❖ **Derivadas**  
+↳ `derivada de 3x^2 + x`  
+↳ Responde con el resultado → `6x + 1`
+
+❖ **Límites**  
+↳ `límite de sin(x)/x cuando x->0`
+
+❖ **Conversión de medidas**  
+↳ `5 km a cm`  
+↳ `25 °C a °F`  
+↳ `300 K a °C`
+
+❖ **Porcentajes**  
+↳ `25% de 800` → `200`
+
+🎯 **Créditos:** hecho con 💙 por **Did**.
+</div>
+
+</div>
+
+<footer>© 2025 - DID</footer>
+
+<script>
+// Normaliza números (quita ceros extra)
+const limpiarNumero = n =>
+  Number.isFinite(n) ? parseFloat(n.toFixed(6)).toString().replace(/\.0+$/,'') : n;
+
+// Prettify matemático
+const prettyExpr = expr =>
+  expr.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+
+/* Calculadora básica */
+function calcBasica(){
+  try{
+    const r = math.evaluate(document.getElementById("basic").value);
+    document.getElementById("resBasic").innerText = "Resultado: " + limpiarNumero(r);
+  }catch(e){
+    document.getElementById("resBasic").innerText="⚠ Error de sintaxis";
+  }
+}
+
+/* Derivadas y límites */
+function resolverDif() {
+  let rawInput = document.getElementById("dif").value.trim();
+
+  if (!rawInput) {
+    document.getElementById("resDif").innerText = "⚠ Ingresa una expresión.";
+    return;
+  }
+
+  rawInput = rawInput.toLowerCase();
+
+  try {
+    /*** 📌 Cálculo de límite ***/
+    if (rawInput.includes("límite") || rawInput.includes("limite")) {
+      const exprMatch = rawInput.match(/de (.*?) cuando/i);
+      const varMatch = rawInput.match(/cuando (.*?)\s*->/i);
+      const valMatch = rawInput.split("->")[1]?.trim();
+
+      if (!exprMatch || !varMatch || !valMatch) {
+        document.getElementById("resDif").innerText = "⚠ Formato inválido. Usa: límite de f(x) cuando x->a";
+        return;
+      }
+
+      const expr = exprMatch[1].trim();
+      const variable = varMatch[1].trim();
+      const valor = parseFloat(valMatch);
+
+      let limite;
+      try {
+        limite = math.limit(expr, variable, valor);
+      } catch {
+        const exprSust = expr.replace(new RegExp(variable, "g"), `(${valor})`);
+        limite = math.evaluate(exprSust);
+      }
+
+      document.getElementById("resDif").innerText = `Resultado: ${limpiarNumero(limite)}`;
+      document.getElementById("resExp").innerText = `Límite de ${expr} cuando ${variable}→${valor}`;
+      return;
+    }
+
+    /*** 📌 Cálculo de derivada ***/
+    if (!rawInput.includes("derivada de")) {
+      document.getElementById("resDif").innerText = "⚠ Debes escribir 'derivada de ...'";
+      return;
+    }
+
+    const exprText = rawInput.replace("derivada de", "").trim();
+    const node = math.parse(exprText);
+
+    if (node.isOperatorNode && node.op === "/") {
+      const u = node.args[0].toString();
+      const v = node.args[1].toString();
+      const uP = math.derivative(u, "x").toString();
+      const vP = math.derivative(v, "x").toString();
+      const deriv = math.simplify(`((${uP})*(${v}) - (${u})*(${vP})) / (${v})^2`);
+      document.getElementById("resDif").innerText = `Resultado: ${prettyExpr(deriv.toString())}`;
+      document.getElementById("resExp").innerText = `Usando: (u'v - uv') / v²`;
+      return;
+    }
+
+    const derivada = math.simplify(math.derivative(exprText, "x"));
+    document.getElementById("resDif").innerText = `Resultado: ${prettyExpr(derivada.toString())}`;
+    document.getElementById("resExp").innerText = "Se aplicaron reglas básicas y simplificación.";
+
+  } catch (err) {
+    document.getElementById("resDif").innerText = "⚠ Error procesando la expresión";
+  }
+}
+
+/* Conversión de medidas */
+function convertir(){
+  const raw=document.getElementById("conv").value.trim();
+  const p=raw.split(/\s+a\s+/i);
+  if(p.length!==2) return document.getElementById("resConv").innerText="⚠ Formato: 5 km a m";
+
+  const valU = p[0].trim();
+  const objetivo = p[1].trim();
+  const partes = valU.match(/^(-?[0-9,.]+)\s*([a-z°A-Z]+)$/);
+
+  if(!partes) return document.getElementById("resConv").innerText="⚠ Unidad inválida";
+
+  const valor = parseFloat(partes[1].replace(",","."));
+  const unidad1 = partes[2].toLowerCase();
+  const unidad2 = objetivo.toLowerCase();
+
+  const tempRes = convertirTemp(valor,unidad1,unidad2);
+  if(tempRes) return document.getElementById("resConv").innerText=tempRes;
+
+  try{
+    const r = math.unit(valor,unidad1).to(unidad2).toNumeric(unidad2);
+    document.getElementById("resConv").innerText = limpiarNumero(r)+" "+unidad2;
+  }catch(e){
+    document.getElementById("resConv").innerText="⚠ No se pudo convertir";
+  }
+}
+
+function convertirTemp(v,u1,u2){
+  const convs = {
+    "c->f": v=>v*9/5+32+" °F",
+    "f->c": v=>(v-32)*5/9+" °C",
+    "c->k": v=>v+273.15+" K",
+    "k->c": v=>v-273.15+" °C",
+    "f->k": v=>(v-32)*5/9+273.15+" K",
+    "k->f": v=>(v-273.15)*9/5+32+" °F"
+  };
+  return convs[`${u1[0]}->${u2[0]}`]?.(v) || null;
+}
+
+/* Porcentajes */
+function porcentaje(){
+  const raw = document.getElementById("por").value;
+  const m = raw.match(/^([\d.,]+)%\s*de\s*([\d.,]+)/i);
+  if(!m) return document.getElementById("resPor").innerText="⚠ Formato: 25% de 800";
+
+  const p = parseFloat(m[1].replace(",","."));
+  const n = parseFloat(m[2].replace(",","."));
+  const r = p/100 * n;
+  document.getElementById("resPor").innerText="Resultado: "+limpiarNumero(r);
+}
+</script>
+
+</body>
+</html>
+
